@@ -2,7 +2,7 @@
 
 This is the implementation of the paper **Sparse Point Cloud Patches Rendering via Splitting 2D Gaussians**(CVPR 2025).
 
-[[paper link(coming soon)](https://cvpr.thecvf.com/Conferences/2025)]
+[[paper link (arxiv)](https://arxiv.org/abs/2505.09413)]
 
 ### Abstract
 
