@@ -66,8 +66,8 @@ def gen_gaussians_vis_dir(path, xyz, p_rgb, p_o, p_sxyz, p_q, p_sh):
     res_root_path = path
     res_path = os.path.join(res_root_path, 'point_cloud', 'iteration_7000')
     os.makedirs(res_path, exist_ok=True)
-    os.system(f'cp /home/mcf/data2/works/point23dgs/point23dgs/code3/p2gs/assets/cameras.json {res_root_path}')
-    os.system(f'cp /home/mcf/data2/works/point23dgs/point23dgs/code3/p2gs/assets/cfg_args {res_root_path}')
+    # os.system(f'cp /home/mcf/data2/works/point23dgs/point23dgs/code3/p2gs/assets/cameras.json {res_root_path}')
+    # os.system(f'cp /home/mcf/data2/works/point23dgs/point23dgs/code3/p2gs/assets/cfg_args {res_root_path}')
     res_path = os.path.join(res_path, 'point_cloud.ply')
     PlyData([el]).write(res_path)
 

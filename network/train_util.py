@@ -43,7 +43,11 @@ def train(cmd_args, logging):
             logging.info(f'Load weight from: {weight_path}')
             model.load_state_dict(torch.load(weight_path))
     model.train()
+    # allocated = torch.cuda.memory_allocated() / 1024**2
+    # print(f"GPU Memory: Allocated: {allocated:.2f}MB")
     model.cuda()
+    # allocated = torch.cuda.memory_allocated() / 1024**2
+    # print(f"GPU Memory: Allocated: {allocated:.2f}MB")
 
     if not cmd_args.scene_cate and cmd_args.patch:
         entire_model = GauPCRender(cmd_args)
@@ -100,6 +104,9 @@ def train(cmd_args, logging):
         for i in range(start_epoch, max_epoch):
             progress.reset(step_p)
             for j, data in enumerate(dataloader):
+                # if data[0][0].shape[0] > 100:
+                #     print(f'Skipping{j}({data[0][0].shape[0]})')
+                #     continue
                 data = dataset.to_cuda(data)
                 if not cmd_args.scene_cate:
                     # training object category
@@ -118,7 +125,7 @@ def train(cmd_args, logging):
                     optimizer.step()
                 else:
                     # Training scene category
-                    __b = data[0][0].shape[0]
+                    __b = data[0][0].shape[0] # 就是一个点云被分成了多少个patch
                     # if cmd_args.show_shape_log:
                     # print(data[0][0].shape)
                     if __b == 1:
@@ -147,6 +154,11 @@ def train(cmd_args, logging):
                     p_sh   = torch.reshape(p_sh,   [1, -1, p_sh.shape[2]])
                 
                     output = xyz, p_rgb, p_o, p_sxyz, p_q, p_sh
+                    # output = output.detach()
+                    # del output
+                    # torch.cuda.memory_allocated()
+                    # torch.cuda.ipc_collect()
+                    # continue
                     loss = model.loss(output, data, epoch=i, step=j)[0]
                     optimizer.zero_grad()
                     if __b > 5:
@@ -154,6 +166,15 @@ def train(cmd_args, logging):
                         max_norm = 1.0
                         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
                         optimizer.step()
+
+                        del output_1, output_2, output
+                        torch.cuda.empty_cache()
+                    # else:
+                    #     print(__b)
+
+                    # loss = loss.detach()
+                    # torch.cuda.memory_allocated()
+                    # torch.cuda.ipc_collect()
                 
                 # progress.advance(step_p)
                 progress.update(step_p, advance=1, loss=f'Loss: {loss.item():.4f}', refresh=True)

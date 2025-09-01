@@ -37,6 +37,9 @@ parser.add_argument('--save_img_file', action='store_true', help='Save rendered 
 parser.add_argument('--save_gs_file', action='store_true', help='Save gs file and view in 3DGS Viewer.')
 parser.add_argument('--ignore_missing', action='store_true', help='Ignore missing area when evaluating scenes.')
 
+
+parser.add_argument('--data_path', default='')
+parser.add_argument('--resolution', type=int, default=-1)
 cmd_args = parser.parse_args()
 
 logging.basicConfig(level=logging.INFO,
@@ -62,6 +65,8 @@ def get_2dgs_args():
     lp = ModelParams(parser)
     op = OptimizationParams(parser)
     pp = PipelineParams(parser)
+
+    
     parser.add_argument('--ip', type=str, default="127.0.0.1")
     parser.add_argument('--port', type=int, default=6009)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
@@ -70,6 +75,7 @@ def get_2dgs_args():
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])
     parser.add_argument("--start_checkpoint", type=str, default = None)
+    
     args = parser.parse_args([])
     args.save_iterations.append(args.iterations)
     return args, lp, op, pp
@@ -77,6 +83,11 @@ def get_2dgs_args():
 SCENE_CATES = ['scannet', 'dtu']
 
 args_2dgs, lp_2dgs, op_2dgs, pp_2dgs = get_2dgs_args()
+
+
+lp_2dgs._resolution = cmd_args.resolution
+args_2dgs.resolution = cmd_args.resolution
+
 lp_2dgs.sh_degree = cmd_args.sh
 args_2dgs.sh_degree = cmd_args.sh
 args_2dgs.data_device = 'cpu'
@@ -90,6 +101,7 @@ if cmd_args.cate in SCENE_CATES:
     args_2dgs.pre_data_image_num = 1
     cmd_args.patch = True
     cmd_args.scene_cate = True
+    # cmd_args.scene_cate = False
 else:
     cmd_args.scene_cate = False
 

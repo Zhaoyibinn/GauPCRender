@@ -31,12 +31,38 @@ class GaussianDataset(Dataset):
         else:
             self.scene_shuffle = False
 
-        self.data_path = os.path.join(cmd_args.data_root, self.cate)
+        # self.data_path = os.path.join(cmd_args.data_root, self.cate)
+        # self.data_path = "data/dtu_own/scan24_3/0_1_2"
+        # self.split_path = os.path.join(cmd_args.data_root, 'split.json')
+
+        # with open(self.split_path,'r') as f:
+        #     split_dict = json.load(f)
+        # self.ids = split_dict[self.cate][split]
+
+        self.data_path = cmd_args.data_path
         self.split_path = os.path.join(cmd_args.data_root, 'split.json')
+
+        self.test_idx = [23,24,33]
 
         with open(self.split_path,'r') as f:
             split_dict = json.load(f)
-        self.ids = split_dict[self.cate][split]
+        if split_dict[self.cate][split] != []:
+            self.ids = split_dict[self.cate][split]
+        else:
+            all_idx = sorted(os.listdir(self.data_path))
+            train_idx = []
+            test_idx = []
+            for idx in all_idx:
+                scene_name = idx.split('_')[0]
+                
+                if int(idx.split('_')[1]) not in self.test_idx:
+                    train_idx.append(idx)
+                else:
+                    test_idx.append(idx)
+            if split == 'train':
+                self.ids = train_idx
+            else:
+                self.ids = test_idx
 
     def __len__(self):
         return len(self.ids)    
@@ -84,15 +110,24 @@ class GaussianDataset(Dataset):
             exit()
 
         input_points_ply_file_path = os.path.join(self.data_path, _id, 'points3d.ply')
-        plydata_input = PlyData.read(input_points_ply_file_path)
-        x  = plydata_input.elements[0].data['x']
-        y  = plydata_input.elements[0].data['y']
-        z  = plydata_input.elements[0].data['z']
-        r  = plydata_input.elements[0].data['red']
-        g  = plydata_input.elements[0].data['green']
-        b  = plydata_input.elements[0].data['blue']
-        xyz = np.stack([x, y, z], -1)
-        rgb = np.stack([r, g, b], -1)            
+        if os.path.exists(input_points_ply_file_path):
+            plydata_input = PlyData.read(input_points_ply_file_path)
+            x  = plydata_input.elements[0].data['x']
+            y  = plydata_input.elements[0].data['y']
+            z  = plydata_input.elements[0].data['z']
+            r  = plydata_input.elements[0].data['red']
+            g  = plydata_input.elements[0].data['green']
+            b  = plydata_input.elements[0].data['blue'] 
+            xyz = np.stack([x, y, z], -1)
+            rgb = np.stack([r, g, b], -1)    
+
+        else:
+            vggt_ply = o3d.io.read_point_cloud(os.path.join(self.data_path, _id, 'sparse','0','points3D.ply'))
+            xyz = np.array(vggt_ply.points)
+            rgb = np.array(vggt_ply.colors) * 255
+        
+
+          
         if self.point_number != -1:
             input_xyz, input_rgb = self.random_sample([xyz, rgb], self.point_number)
         else:
@@ -121,12 +156,31 @@ class GaussianPatchDataset(Dataset):
             self.scene_shuffle = False
             self.is_all_patch = True
         self.patch_point_number = cmd_args.patch_point_number
-        self.data_path = os.path.join(cmd_args.data_root, self.cate)
+        # self.data_path = os.path.join(cmd_args.data_root, self.cate)
+        self.data_path = cmd_args.data_path
         self.split_path = os.path.join(cmd_args.data_root, 'split.json')
+
+        self.test_idx = [23,24,33]
 
         with open(self.split_path,'r') as f:
             split_dict = json.load(f)
-        self.ids = split_dict[self.cate][split]
+        if split_dict[self.cate][split] != []:
+            self.ids = split_dict[self.cate][split]
+        else:
+            all_idx = sorted(os.listdir(self.data_path))
+            train_idx = []
+            test_idx = []
+            for idx in all_idx:
+                scene_name = idx.split('_')[0]
+                
+                if int(idx.split('_')[1]) not in self.test_idx:
+                    train_idx.append(idx)
+                else:
+                    test_idx.append(idx)
+            if split == 'train':
+                self.ids = train_idx
+            else:
+                self.ids = test_idx
 
     def __len__(self):
         return len(self.ids)
@@ -266,16 +320,22 @@ class GaussianPatchDataset(Dataset):
         input_points_ply_file_path = os.path.join(self.data_path, _id, 'points3d.ply')
         if not self.scene_cate:
             input_points_ply_file_path = os.path.join(self.data_path, _id, 'points3d.ply')
+            if os.path.exists( os.path.join(self.data_path, _id, 'img_patch')):
+                plydata_input = PlyData.read(input_points_ply_file_path)
+                x  = plydata_input.elements[0].data['x']
+                y  = plydata_input.elements[0].data['y']
+                z  = plydata_input.elements[0].data['z']
+                r  = plydata_input.elements[0].data['red']
+                g  = plydata_input.elements[0].data['green']
+                b  = plydata_input.elements[0].data['blue']
+                xyz = np.stack([x, y, z], -1)
+                rgb = np.stack([r, g, b], -1)
+
+            else:
+                vggt_ply = o3d.io.read_point_cloud(os.path.join(self.data_path, _id, 'sparse','0','points3D.ply'))
+                xyz = np.array(vggt_ply.points)
+                rgb = np.array(vggt_ply.colors) * 255
             
-            plydata_input = PlyData.read(input_points_ply_file_path)
-            x  = plydata_input.elements[0].data['x']
-            y  = plydata_input.elements[0].data['y']
-            z  = plydata_input.elements[0].data['z']
-            r  = plydata_input.elements[0].data['red']
-            g  = plydata_input.elements[0].data['green']
-            b  = plydata_input.elements[0].data['blue']
-            xyz = np.stack([x, y, z], -1)
-            rgb = np.stack([r, g, b], -1)
 
             if self.point_number != -1:
                 all_xyz, all_rgb = self.random_sample([xyz, rgb], self.point_number)
@@ -295,7 +355,13 @@ class GaussianPatchDataset(Dataset):
         else:
             if not self.is_all_patch or len(scene.getTrainCameras()) == 1:
                 # random select a view of a scene
-                xyz, rgb = self.get_scene_img_patch(_id, scene)   
+                if os.path.exists( os.path.join(self.data_path, _id, 'img_patch')):
+                    xyz, rgb = self.get_scene_img_patch(_id, scene)   
+
+                else:
+                    vggt_ply = o3d.io.read_point_cloud(os.path.join(self.data_path, _id, 'sparse','0','points3D.ply'))
+                    xyz = np.array(vggt_ply.points)
+                    rgb = np.array(vggt_ply.colors) * 255
                 if self.point_number != -1:
                     all_xyz, all_rgb = self.random_sample([xyz, rgb], self.point_number)
                 else:
@@ -304,6 +370,9 @@ class GaussianPatchDataset(Dataset):
                 all_normal = estimate_normal(all_xyz)
                 all_patch_xyz, all_patch_rgb, all_patch_normal, anchor = self.all_patch([all_xyz, all_rgb, all_normal])
                 # print(f'scene: {_id}, xyz: {xyz.shape}, anchor: {anchor.shape}, all_patch_xyz: {all_patch_xyz.shape}')
+                b = all_patch_xyz.shape[0]
+                # if b > 50:
+                #     return 0, 0, 0, 0, 0, 0, 0, idx, _id, scene
                 return all_patch_xyz, all_patch_rgb, all_patch_normal, all_xyz, all_rgb, all_normal, anchor, idx, _id, scene
             else:
                 # special process for all the views of a scene for evaluation
@@ -316,8 +385,15 @@ class GaussianPatchDataset(Dataset):
                 anchor = []
                 for view_idx in range(len(scene.getTrainCameras())):
                     # print(view_idx)
-                    xyz, rgb = self.get_scene_img_patch(_id, scene, view_idx=view_idx)
+                    if os.path.exists( os.path.join(self.data_path, _id, 'img_patch')):
+                        xyz, rgb = self.get_scene_img_patch(_id, scene, view_idx=view_idx)
+                    else:
+                        vggt_ply = o3d.io.read_point_cloud(os.path.join(self.data_path, _id, 'sparse','0','points3D.ply'))
+                        xyz = np.array(vggt_ply.points)
+                        rgb = np.array(vggt_ply.colors) * 255
+                    # xyz, rgb = self.get_scene_img_patch(_id, scene)
                     # print('org', xyz.shape, self.point_number)
+
                     if self.point_number != -1:
                         if self.point_number < 100_000:
                             ratio = self.point_number / 100_000
@@ -332,6 +408,10 @@ class GaussianPatchDataset(Dataset):
                             input_xyz = xyz
                             input_rgb = rgb
                     # print('sampled', input_xyz.shape)
+                    if rgb.shape[0] == 0:
+                        vggt_ply = o3d.io.read_point_cloud(os.path.join(self.data_path, _id, 'sparse','0','points3D.ply'))
+                        input_xyz = np.array(vggt_ply.points)
+                        input_rgb = np.array(vggt_ply.colors) * 255
                     input_normal = estimate_normal(input_xyz)
                     _all_xyz = input_xyz
                     _all_rgb = input_rgb
