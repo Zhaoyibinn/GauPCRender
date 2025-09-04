@@ -3,8 +3,8 @@ import cv2
 import shutil
 from tqdm import tqdm
 
-root_path = "data/dtu_own"
-out_root_path  = "data/dtu_own3_all"
+root_path = "data/dtu_colmap_3_many"
+out_root_path  = "data/dtu_colmap_3_many_all"
 
 scene_list = os.listdir(os.path.join(root_path))
 for scene_name in tqdm(scene_list):

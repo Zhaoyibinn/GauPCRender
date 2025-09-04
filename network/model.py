@@ -12,6 +12,8 @@ from transform_3d import *
 from scene import GaussianModel
 from gaussian_renderer import render
 from utils.loss_utils import l1_loss, ssim
+from fused_ssim import fused_ssim
+
 from simple_knn._C import distCUDA2
 from utils.sh_utils import RGB2SH
 from pointMLP import pointMLPEncoderBase6
@@ -234,12 +236,12 @@ class GauPCRender(nn.Module):
                 image = torch.clamp(image, 0, 1)
                 gt_image = torch.clamp(gt_image, 0, 1)
 
-                
+                image[gt_image==0] = 0
                 
                 edge_mask = get_edge_mask(gt_image)
 
                 Ll1 = l1_loss(image, gt_image)
-                Lssim = ssim(image, gt_image)
+                Lssim = fused_ssim(image.unsqueeze(0), gt_image.unsqueeze(0))
 
                 Ll1_w = (1.0 - self.op_2dgs.lambda_dssim)
                 Lssim_w = self.op_2dgs.lambda_dssim 
@@ -334,7 +336,7 @@ class GauPCRender(nn.Module):
                 # print(image.shape, gt_image.shape)
                 # print(torch.mean(gt_image))
                 Ll1 = l1_loss(image, gt_image)
-                Lssim = ssim(image, gt_image)
+                Lssim = fused_ssim(image.unsqueeze(0), gt_image.unsqueeze(0))
 
                 Ledge = torch.abs((image - gt_image))
                 Ledge = edge_mask * Ledge
@@ -409,6 +411,8 @@ class GauPCRender(nn.Module):
                 image = torch.clamp(image, 0, 1)
                 gt_image = torch.clamp(gt_image, 0, 1)
 
+                image[gt_image==0] = 0
+
                 if ignore_missing:
                     missing_mask = image < 1e-5
                     missing_mask = torch.all(missing_mask, dim=0)
@@ -423,7 +427,7 @@ class GauPCRender(nn.Module):
                     image = torch.nn.functional.interpolate(image.unsqueeze(0), (old_h, old_w), mode='bilinear', align_corners=False).squeeze(0)
                     gt_image = torch.nn.functional.interpolate(gt_image.unsqueeze(0), (old_h, old_w), mode='bilinear', align_corners=False).squeeze(0)
 
-                Lssim = ssim(image, gt_image)
+                Lssim = fused_ssim(image.unsqueeze(0), gt_image.unsqueeze(0))
                 Lpsnr = psnr(image, gt_image)
 
                 _image = lpips_resize(image)

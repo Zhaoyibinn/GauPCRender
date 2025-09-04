@@ -40,8 +40,16 @@ def loadCam(args, id, cam_info, resolution_scale):
 
     if len(cam_info.image.split()) > 3:
         import torch
-        resized_image_rgb = torch.cat([PILtoTorch(im, resolution) for im in cam_info.image.split()[:3]], dim=0)
-        loaded_mask = PILtoTorch(cam_info.image.split()[3], resolution)
+        # resized_image_rgb = torch.cat([PILtoTorch(im, resolution) for im in cam_info.image.split()[:3]], dim=0)
+        # loaded_mask = PILtoTorch(cam_info.image.split()[3], resolution)
+        # gt_image = resized_image_rgb
+        r, g, b, a = [PILtoTorch(im, resolution) for im in cam_info.image.split()[:4]]
+        alpha_mask = a > 0
+        r = r * alpha_mask
+        g = g * alpha_mask
+        b = b * alpha_mask
+        resized_image_rgb = torch.cat([r, g, b], dim=0)
+        loaded_mask = a  # 如果需要的话，alpha通道作为mask
         gt_image = resized_image_rgb
     else:
         resized_image_rgb = PILtoTorch(cam_info.image, resolution)

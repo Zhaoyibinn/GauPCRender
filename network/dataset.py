@@ -167,7 +167,9 @@ class GaussianPatchDataset(Dataset):
         if split_dict[self.cate][split] != []:
             self.ids = split_dict[self.cate][split]
         else:
+            # all_idx = sorted(os.listdir(self.data_path))[:372]
             all_idx = sorted(os.listdir(self.data_path))
+            # 先暂时保留了scan100之后的
             train_idx = []
             test_idx = []
             for idx in all_idx:

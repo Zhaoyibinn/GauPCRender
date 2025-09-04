@@ -1,0 +1,6 @@
+[submodule "submodule/fused-ssim"]
+	path = submodule/fused-ssim
+	url = https://github.com/rahul-goel/fused-ssim.git
+[submodule "submodule/vggt"]
+	path = submodule/vggt
+	url = https://github.com/Zhaoyibinn/vggt.git
